@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Button } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { StyleSheet, View, Text, Button, Alert } from 'react-native';
 import NumberContainer from '../components/NumberContainer';
 import Card from '../components/Card';
 
@@ -19,14 +19,56 @@ const GameScreen = (props) => {
   const [currentGuess, setCurrentGuess] = useState(
     generateRandomBetween(1, 100, props.uesrChoice)
   );
+  const [rounds, setRounds] = useState(0);
+  const currentLow = useRef(1);
+  const currentHigh = useRef(100);
+
+  const { uesrChoice, onGameOver } = props;
+
+  useEffect(() => {
+    if (currentGuess === uesrChoice) {
+      onGameOver(rounds);
+    }
+  }, [currentGuess, uesrChoice, onGameOver]);
+
+  const nextGuessHandler = (direction) => {
+    if (
+      (direction === 'smaller' && currentGuess < props.uesrChoice) ||
+      (direction === 'greater' && currentGuess > props.uesrChoice)
+    ) {
+      Alert.alert("Don't lie.", 'You know that this is wrong ...', [
+        { text: 'sorry', style: 'cancel' },
+      ]);
+      return;
+    }
+
+    if (direction === 'smaller') {
+      currentHigh.current = currentGuess;
+    } else {
+      currentLow.current = currentGuess;
+    }
+    const nextNumber = generateRandomBetween(
+      currentLow.current,
+      currentHigh.current,
+      currentGuess
+    );
+    setCurrentGuess(nextNumber);
+    setRounds((curRounds) => curRounds + 1);
+  };
 
   return (
     <View style={styles.screen}>
       <Text> Opponent's guess</Text>
       <NumberContainer>{currentGuess}</NumberContainer>
       <Card style={styles.buttonSize}>
-        <Button title='Lower' onPress={() => {}} />
-        <Button title='Higher' onPress={() => {}} />
+        <Button
+          title='Lower'
+          onPress={nextGuessHandler.bind(this, 'smaller')}
+        />
+        <Button
+          title='Higher'
+          onPress={nextGuessHandler.bind(this, 'greater')}
+        />
       </Card>
     </View>
   );
